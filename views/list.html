@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <h2>list页面 {{username}}</h2>
+  <button id="male">男生组</button> <button id="female">女生组</button>
+  组聊: <input type="text" name="" id="groupMsg"> <button id="sendGroupMsg">发起组聊</button>
+  当前在线人数: <span id="online"></span>
+  <div id="box">
+    <!-- <ul >
+      {{each msg}}
+      <li>名字：{{$value.username}} 描述： {{$value.content}}</li>
+      {{/each}}
+    </ul> -->
+    <ul id="ul"></ul><br>
+  </div>
+  对 <select id="towho" onchange="getVal(this.value)"></select>
+  说: <input type="text" name="" id="privateMsg"> <button id="sendPrivateMsg">发起私聊</button>
+
+  <!-- {{username}}您好,请说话:  <input type="text" name="newContent" id="newContent"> <button id="btn">发送</button> -->
+
+</body>
+</html>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io('http://localhost:8889');
+  var privateTo,groupTo;
+  function getVal(val) {
+    privateTo = val
+  }
+  
+  // socket连接
+  socket.on('connect', function(){
+    console.log('连接上了');
+    socket.emit('login',{
+      id:{{id}}
+    })
+  });
+
+  socket.on('event', function(data){});
+  socket.on('disconnect', function(){
+    console.log('连接断开');
+  });
+
+  // document.getElementById('btn').onclick=function(){
+  //   var inputVal= document.getElementById('newContent').value;
+  //   console.log(inputVal);
+  //   socket.emit('sendMsg',{
+  //     msg:inputVal
+  //   })
+  // }
+  document.getElementById('sendPrivateMsg').onclick=function(){
+    var inputVal= document.getElementById('privateMsg').value;
+    socket.emit('sendPrivateMsg',{
+      msg:inputVal,
+      to:privateTo
+    })
+  }
+  document.getElementById('male').onclick=function(){
+    socket.emit('jounGroup','male');
+    groupTo = 'male';
+  }
+  document.getElementById('female').onclick=function(){
+    socket.emit('jounGroup','female');
+    groupTo = 'female';
+  }
+  document.getElementById('sendGroupMsg').onclick=function(){
+    var inputVal= document.getElementById('groupMsg').value;
+    socket.emit('sendGroupMsg',{
+      msg:inputVal,
+      groupTo
+    })
+  }
+  // 获取数据
+  socket.on('speakAll', function(data){
+    console.log('获取数据',data);
+    document.getElementById('ul').innerHTML +=`<li>${data}</li>`
+  });
+  socket.on('pravate', function(data){
+    console.log('获取private数据',data);
+    // document.getElementById('ul').innerHTML +=`<li>${data}</li>`
+  });
+  // 获取在线人数
+  socket.on('online', function(data){
+    let users=Object.values(data)
+    document.getElementById('online').innerText =  users.length;
+
+    // 创建多选框
+    let select = document.getElementById('towho');
+    let html;
+    for(let i=users.length-1;i>=0;i--){
+      html+=`
+        <option value="${users[i].socketId}">
+          ${users[i].username}  
+        </option>
+      `
+    }
+    select.innerHTML = html;
+  });
+</script>
+<!-- <script>
+  document.getElementById('btn').onclick=function(){
+    var inputVal= document.getElementById('newContent').value;
+    console.log(inputVal);
+    // 创建一个xhr请求对象
+    var xhr = new XMLHttpRequest();
+    // 设置请求方式与路径
+    xhr.open('post','/add');
+    // 设置请求头
+    xhr.setRequestHeader('content-type','application/x-www-form-urlencoded')
+    // 发送数据
+    xhr.send('msg='+inputVal);
+    xhr.onreadystatechange=function(){
+      if(xhr.readyState==4 && xhr.status==200){
+        console.log(JSON.parse(xhr.responseText));
+        let arr = JSON.parse(xhr.responseText);
+        let html
+        html = "<ul>";
+        for(let i = arr.length-1;i>=0;i--){
+          html+="<li>名字："+arr[i].username+ "   描述:  "+arr[i].content+"</li>";
+        }
+        html+="</ul>";
+        document.getElementById('box').innerHTML = html;
+      }
+    }
+  }
+  
+</!--> 
